@@ -1,0 +1,19 @@
+
+# sub1 and sub2 act as namespaces
+sub1: '<import>sub1.yaml'
+sub2: '<import>/Users/fschmidt/code/yaml-config-mngr/example_configs/sub2.yaml'
+
+some_param: 'main_param'
+some_ref_param_to_a_list: '<ref>main_system/some_values[1]'
+
+this_also_works: '<ref>sub1/some_param'
+this_is_different: '<ref>sub2/some_param'
+
+main_system: {
+  some_values: [0,1,2,3,4]
+}
+
+some_complex_list: [
+  {this_is_a_param: 'hello'},
+  {this_is_another_param: 'world'},
+]
