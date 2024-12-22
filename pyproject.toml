@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "cool_config"
+version = "0.1.0"
+description = ""
+authors = ["Felix Schmidt"]
+
+[tool.poetry.dependencies]
+python = ">=3.11.6"
+pyyaml = "^6.0.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

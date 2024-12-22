@@ -1,0 +1,1 @@
+from cool_config.config import Config
