@@ -121,34 +121,6 @@ class Config:
         path = remove_from_end('/', path)
         return path
 
-    def __get_item_from_path(self, path):
-        if path.startswith('../'):
-            path = remove_from_start('../', path)
-            return self.parent_config.__get_item_from_path(path)
-        
-        cur = path.split('/')[0]
-        list_index = None
-        if cur.endswith(']'):
-            list_index = cur.split('[')[-1].replace(']', '')
-            list_index = int(list_index)
-            cur = cur.split('[')[0]
-
-        if self.has_key(cur):
-            item = self.__get_item(cur)
-            if list_index is not None:
-                if not isinstance(item, list):
-                    print(f'Error! Specified a list in ref path but received {item}!')
-                    return None
-                item = item[list_index]
-
-            if isinstance(item, Config):
-                path = remove_from_start(f'{cur}/', path)
-                return item.__get_item_from_path(path)
-            else:
-                return item
-        else:
-            return None 
-
     # Main
 
     def print(self):
@@ -206,24 +178,60 @@ class Config:
         return f'Config: {self.config.__str__()}'
 
     def __getitem__(self, key):
+        with_default = False
         if isinstance(key, tuple):
             assert len(key) == 2
             default = key[1]
             key = key[0]
-            return self.__get_item_with_default(key, default)
-        else:
-            return self.__get_item(key)
-    
+            with_default = True
+        
+        item = self.__get_item_from_path(key)
+
+        if item is None:
+            if with_default:
+                return default
+            else:
+                raise ValueError('Config is missing key "{key}"!')
+        
+        return item
+
+    def __get_item_from_path(self, path):
+        if path.startswith('../'):
+            path = remove_from_start('../', path)
+            return self.parent_config.__get_item_from_path(path)
+        
+        cur = path.split('/')[0]
+        list_index = None
+        if cur.endswith(']'):
+            list_index = cur.split('[')[-1].replace(']', '')
+            list_index = int(list_index)
+            cur = cur.split('[')[0]
+        
+        if self.has_key(cur):
+            item = self.__get_item(cur)
+            if list_index is not None:
+                if not isinstance(item, list):
+                    print(f'Error! Specified a list in path but received {item}!')
+                    return None
+                item = item[list_index]
+
+            if cur == path.split('[')[0]: # We are done
+                return item
+            else:
+                if isinstance(item, Config):
+                    path = remove_from_start(f'{cur}/', path)
+                    return item.__get_item_from_path(path)
+        return None 
+
     def __get_item(self, key):
         self.assert_has_key(key)
         return self.config[key]
 
     def __get_item_with_default(self, key, default):
         if self.has_key(key):    
-            item = self.__parse_item(key, self.config[key])
-            return item
+            return self.config[key]
         else:
-            return self.__parse_item(key, default)
+            return default
 
     def __setitem__(self, key, value):
         self.config[key] = value
