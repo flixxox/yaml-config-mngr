@@ -236,10 +236,35 @@ class Config:
     def __setitem__(self, key, value):
         self.config[key] = value
     
+    def hash(self, exclude=[]):
+        import hashlib
+        from pprint import pformat
+        return hashlib.md5(
+            pformat(self.asdict(exclude=exclude)).encode('utf-8')
+        ).hexdigest()
+
+    def dump_to_file(self, filepath, exclude=[]):
+        with open(filepath, 'w') as outfile:
+            yaml.dump(self.asdict(exclude=exclude), outfile)
+
     # Dict Ops
 
-    def asdict(self):
-        return self.config
+    def asdict(self, exclude=[]):
+        def __parse_entry(v):
+            if isinstance(v, Config):
+                return v.asdict()
+            if isinstance(v, list):
+                res = []
+                for elem in v:
+                    res.append(__parse_entry(elem))
+                return res
+            return v
+
+        config_dict = {}
+        for k, v in self.config.items():
+            if not k in exclude:
+                config_dict[k] = __parse_entry(v)
+        return config_dict
 
     def update(self, dict, prefix=''):
         for k, v in dict.items():
