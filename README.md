@@ -1,4 +1,4 @@
-# yaml-config-mngr
+# YAML Config Manager
 A yaml config manager in Python. It provides the Config object that provides some advanced config reading functionalities ontop of the dictionary interface.
 
 It provides:

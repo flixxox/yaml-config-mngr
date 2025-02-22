@@ -216,10 +216,10 @@ class Config:
         # The location will be config1/config2 
         res = self.__get_item_from_path(path)
         if res is None:
-                raise RuntimeError(
-                    f'Could not set value {value} for {key}. '
-                    f'Did not find parent {path}.'
-                )
+            raise RuntimeError(
+                f'Could not set value {value} for {key}. '
+                f'Did not find parent {path}.'
+            )
     
         location = res[1]
         if list_index is not None:
