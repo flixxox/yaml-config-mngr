@@ -58,6 +58,8 @@ class CoolConfig:
         self.parent_config = parent_config
         self.root_dir = root_dir
 
+        self.get_item_hook_fn = None
+
         # First, parse everything except the ref paths.
         # Parsing the ref paths then happens on the fly
         self.config = self.parse_except_ref(config_dict)
@@ -267,11 +269,15 @@ class CoolConfig:
     def __get_item(self, key):
         self.assert_has_key(key)
         item = self.config[key]
+        if self.get_item_hook_fn is not None:
+            self.get_item_hook_fn(key, item)
         return item
 
     def __get_item_with_default(self, key, default):
         if self.has_key(key):
             item = self.config[key]
+            if self.get_item_hook_fn is not None:
+                self.get_item_hook_fn(key, item)
             return item
         else:
             return default
@@ -286,6 +292,11 @@ class CoolConfig:
     def dump_to_file(self, filepath, exclude=[]):
         with open(filepath, 'w') as outfile:
             yaml.dump(self.asdict(exclude=exclude), outfile)
+
+    # Hooks
+
+    def register_custom_get_item_hook(self, hook_fn):
+        self.get_item_hook_fn = hook_fn
 
     # Dict Ops
 
