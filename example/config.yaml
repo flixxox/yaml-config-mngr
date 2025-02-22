@@ -1,0 +1,24 @@
+
+# sub1 and sub2 act as namespaces
+sub1: '<import>sub1.yaml'
+sub2: '<import>sub2.yaml'
+
+some_param: 'main_param'
+some_ref_param_to_a_list: '<ref>main_system/some_values[1]'
+
+reference_to_a_reference_does_not_work: '<ref>some_ref_param_to_a_list'
+
+reference_to_sub1: '<ref>sub1/some_param'
+reference_to_sub2: '<ref>sub2/some_param'
+
+main_system: {
+  some_values: [0,1,2,3,4],
+  sub1_param: '<ref>../sub1/some_param4/some_param5[2]'
+}
+
+some_complex_list: [
+  {hello: 'hello'},
+  {world: 'world'},
+  {reference_to_hello: '<ref>../some_complex_list[0]/hello'},
+  {reference_to_world: '<ref>../some_complex_list[1]/world'},
+]

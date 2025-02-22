@@ -47,17 +47,20 @@ class Config:
 
         return Config('/', config, None, get_root_dir(path))
 
+    @staticmethod
+    def parse_config_from_dict(raw_config, root_dir):
+        assert raw_config is not None, 'Provided config seems to be empty' 
+
+        return Config('/', raw_config, None, root_dir)
+
     def __init__(self, path, config_dict, parent_config, root_dir):
         self.path = path
         self.parent_config = parent_config
         self.root_dir = root_dir
 
         # First, parse everything except the ref paths.
-        # Parsing the ref paths is then initiated by
-        # the root config
+        # Parsing the ref paths then happens on the fly
         self.config = self.parse_except_ref(config_dict)
-        if parent_config is None:
-            self.parse_ref_paths()
 
     # Initial Parsing
 
@@ -101,34 +104,16 @@ class Config:
             # Relative Path
             return os.path.join(self.root_dir, path)
 
-    def parse_ref_paths(self):
-        for key, item in self.config.items():
-            if isinstance(item, str) and item.startswith('<ref>'):
-                self.config[key] = self.__parse_ref_path(item)
-            elif isinstance(item, Config):
-                item.parse_ref_paths()
-
-    def __parse_ref_path(self, item):
-        path = self.__prepare_ref_path(item)
-        result = self.__get_item_from_path(remove_from_start('<ref>', item))
-        if result is None:
-            raise ValueError(f'Could not parse reference "{item}" from location "{self.path}"')
-        return result
-
-    def __prepare_ref_path(self, path):
-        path = remove_from_start('<ref>', path)
-        path = remove_from_start('/', path)
-        path = remove_from_end('/', path)
-        return path
-
     # Main
 
     def print(self):
         lines = self.get_print_string(indent=0)
         max_k = max([len(line[0]) for line in lines])
-        max_v = max([len(line[1]) for line in lines])
         for line in lines:
-            print(line[0].ljust(max_k, '-'), line[1].ljust(max_v, '-'))
+            if '[' in line[0] and ']' in line[0]:
+                print(line[0])
+            else: 
+                print(line[0].ljust(max_k, '-'), line[1])
      
     def get_print_string(self, indent=0):
         key_prefix = ''.join(['-' for _ in range(indent)])
@@ -144,7 +129,7 @@ class Config:
         lines = []
         if isinstance(item, Config):
             lines.append([key, ''])
-            lines += item.get_print_string(indent=indent+3)
+            lines += item.get_print_string(indent=indent+4)
             has_dict = True
         elif isinstance(item, list):
             list_lines = []
@@ -185,56 +170,111 @@ class Config:
             key = key[0]
             with_default = True
         
-        item = self.__get_item_from_path(key)
-
-        if item is None:
+        res = self.__get_item_from_path(key)
+        if res is None:
             if with_default:
-                return default
+                item = default
+                location = self
             else:
-                raise ValueError('Config is missing key "{key}"!')
+                raise ValueError(f'Config is missing key "{key}"!')
+        else:
+            item = res[0]
+            location = res[1]
+
+        if isinstance(item, str) and item.startswith('<ref>'):
+            path = location.__prepare_ref_path(item)
+            res = location.__get_item_from_path(path)
+            if res is None:
+                raise RuntimeError(
+                    f'Could not find ref path "{path}" from "{location.path}"! '
+                    f'Referencing param: "{key}" from "{self.path}"!'
+                )
+            item = res[0]
         
         return item
+
+    def __setitem__(self, key, value):
+        if len(key.split('/')) == 1:
+            self.config[key] = value
+            return
+
+        # key is of the form: config1/config2/config3/param = value
+        path = '/'.join(key.split('/')[:-1]) # config1/config2/config3
+        containig_config = key.split('/')[-2] # config3
+        key = key.split('/')[-1] # param
+
+        # key can also be a list entry
+        # In general, the path to config1, config2, config3 can
+        # also lead through a list but this is handled by __get_item_from_path
+        list_index = None
+        if key.endswith(']'):
+            list_index = key.split('[')[-1].replace(']', '')
+            list_index = int(list_index)
+            key = key.split('[')[0]
+
+        # This checks if config1/config2/config3 exists
+        # The location will be config1/config2 
+        res = self.__get_item_from_path(path)
+        if res is None:
+                raise RuntimeError(
+                    f'Could not set value {value} for {key}. '
+                    f'Did not find parent {path}.'
+                )
+    
+        location = res[1]
+        if list_index is not None:
+            location[containig_config].config[key][list_index] = value
+        else:
+            location[containig_config].config[key] = value
 
     def __get_item_from_path(self, path):
         if path.startswith('../'):
             path = remove_from_start('../', path)
-            return self.parent_config.__get_item_from_path(path)
-        
-        cur = path.split('/')[0]
+            if self.parent_config is None:
+                raise RuntimeError('Error! There is no parent config.')
+            else:
+                return self.parent_config.__get_item_from_path(path)
+
+        cur_key = path.split('/')[0]
         list_index = None
-        if cur.endswith(']'):
-            list_index = cur.split('[')[-1].replace(']', '')
+        if cur_key.endswith(']'):
+            list_index = cur_key.split('[')[-1].replace(']', '')
             list_index = int(list_index)
-            cur = cur.split('[')[0]
+            cur_key = cur_key.split('[')[0]
         
-        if self.has_key(cur):
-            item = self.__get_item(cur)
+        if self.has_key(cur_key):
+            item = self.__get_item(cur_key)
             if list_index is not None:
-                if not isinstance(item, list):
-                    print(f'Error! Specified a list in path but received {item}!')
+                if not isinstance(item, list) or len(item) <= list_index:
                     return None
                 item = item[list_index]
+                cur_key = f'{cur_key}[{list_index}]'
 
-            if cur == path.split('[')[0]: # We are done
-                return item
+            if len(path.split('/')) == 1: # We are done
+                return item, self
             else:
                 if isinstance(item, Config):
-                    path = remove_from_start(f'{cur}/', path)
+                    path = remove_from_start(f'{cur_key}/', path)
                     return item.__get_item_from_path(path)
-        return None 
+        return None
+
+    def __prepare_ref_path(self, path):
+        path = remove_from_start('<ref>', path)
+        path = remove_from_start('/', path)
+        path = remove_from_end('/', path)
+        return path
 
     def __get_item(self, key):
         self.assert_has_key(key)
-        return self.config[key]
+        item = self.config[key]
+        return item
 
     def __get_item_with_default(self, key, default):
-        if self.has_key(key):    
-            return self.config[key]
+        if self.has_key(key):
+            item = self.config[key]
+            return item
         else:
             return default
-
-    def __setitem__(self, key, value):
-        self.config[key] = value
     
     def hash(self, exclude=[]):
         import hashlib
@@ -252,7 +292,7 @@ class Config:
     def asdict(self, exclude=[]):
         def __parse_entry(v):
             if isinstance(v, Config):
-                return v.asdict()
+                return v.asdict(exclude=exclude)
             if isinstance(v, list):
                 res = []
                 for elem in v:
@@ -261,7 +301,7 @@ class Config:
             return v
 
         config_dict = {}
-        for k, v in self.config.items():
+        for k, v in self.items():
             if not k in exclude:
                 config_dict[k] = __parse_entry(v)
         return config_dict
@@ -272,7 +312,7 @@ class Config:
 
     def items(self):
         for k, v in self.config.items():
-            yield k, self.__parse_item(k, v)
+            yield k, self.__getitem__(k)
 
     def keys(self):
         return self.config.keys()

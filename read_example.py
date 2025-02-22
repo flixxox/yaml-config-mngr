@@ -1,7 +1,7 @@
 from cool_config import Config
 
 args = {
-    'config': 'example_configs/config.yaml',
+    'config': 'example/config.yaml',
     'some_cli_arg': 'Hello World!'
 }
 
