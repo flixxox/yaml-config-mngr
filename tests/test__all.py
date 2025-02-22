@@ -1,9 +1,9 @@
 import yaml
 import unittest
 
-from cool_config import Config
+from cool_config import CoolConfig
 
-class ConfigTest:
+class CoolConfigTest:
 
     def test_import(self):
         self.assertEqual(
@@ -96,24 +96,24 @@ class ConfigTest:
         )
 
 
-class ConfigFromArgs(unittest.TestCase, ConfigTest):
+class ConfigFromArgs(unittest.TestCase, CoolConfigTest):
     def setUp(self):
         args = {
             'config': 'example/config.yaml',
             'some_cli_arg': 'Hello World!'
         }
 
-        self.config = Config.parse_config_from_args(args)
+        self.config = CoolConfig.parse_config_from_args(args)
 
-class ConfigFromPath(unittest.TestCase, ConfigTest):
+class ConfigFromPath(unittest.TestCase, CoolConfigTest):
     def setUp(self):
-        self.config = Config.parse_config_from_path('example/config.yaml')
+        self.config = CoolConfig.parse_config_from_path('example/config.yaml')
 
-class ConfigFromDict(unittest.TestCase, ConfigTest):
+class ConfigFromDict(unittest.TestCase, CoolConfigTest):
     def setUp(self):
         with open('example/config.yaml', 'r') as f:    
             config = yaml.safe_load(f)
-        self.config = Config.parse_config_from_dict(config, 'example/')
+        self.config = CoolConfig.parse_config_from_dict(config, 'example/')
 
 
 if __name__ == '__main__':

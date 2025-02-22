@@ -1,11 +1,11 @@
-from cool_config import Config
+from cool_config import CoolConfig
 
 args = {
     'config': 'example/config.yaml',
     'some_cli_arg': 'Hello World!'
 }
 
-config = Config.parse_config_from_args(args)
+config = CoolConfig.parse_config_from_args(args)
 
 config.print()
 

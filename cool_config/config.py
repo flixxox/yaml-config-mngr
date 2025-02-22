@@ -20,7 +20,7 @@ def read_yaml(path):
         config = yaml.safe_load(f)
     return config
 
-class Config:
+class CoolConfig:
 
     @staticmethod
     def parse_config_from_args(args, path=None):
@@ -37,7 +37,7 @@ class Config:
                     print(f'CLI config overwrite for "{k}"!')
                 config_dict[k] = v
 
-        return Config('/', config_dict, None, get_root_dir(path))
+        return CoolConfig('/', config_dict, None, get_root_dir(path))
 
     @staticmethod
     def parse_config_from_path(path):
@@ -45,13 +45,13 @@ class Config:
         
         assert config is not None, 'Provided config seems to be empty' 
 
-        return Config('/', config, None, get_root_dir(path))
+        return CoolConfig('/', config, None, get_root_dir(path))
 
     @staticmethod
     def parse_config_from_dict(raw_config, root_dir):
         assert raw_config is not None, 'Provided config seems to be empty' 
 
-        return Config('/', raw_config, None, root_dir)
+        return CoolConfig('/', raw_config, None, root_dir)
 
     def __init__(self, path, config_dict, parent_config, root_dir):
         self.path = path
@@ -74,7 +74,7 @@ class Config:
         parsed = item
         if isinstance(item, dict):
             path = os.path.join(self.path, key)
-            parsed = Config(path, item, self, self.root_dir)
+            parsed = CoolConfig(path, item, self, self.root_dir)
         elif isinstance(item, str):
             if item.startswith('<import>'):
                 parsed = self.__parse_import(key, item)
@@ -88,7 +88,7 @@ class Config:
         item = remove_from_start('<import>', item)
         path = self.__parse_import_path(item)
         config_dict = read_yaml(path)
-        return Config(
+        return CoolConfig(
             os.path.join(self.path, key),
             config_dict,
             self,
@@ -127,7 +127,7 @@ class Config:
     def __get_lines_for_item(self, key, item, indent):
         has_dict = False
         lines = []
-        if isinstance(item, Config):
+        if isinstance(item, CoolConfig):
             lines.append([key, ''])
             lines += item.get_print_string(indent=indent+4)
             has_dict = True
@@ -160,7 +160,7 @@ class Config:
         return self.__str__()
 
     def __str__(self):
-        return f'Config: {self.config.__str__()}'
+        return f'CoolConfig: {self.config.__str__()}'
 
     def __getitem__(self, key):
         with_default = False
@@ -253,7 +253,7 @@ class Config:
             if len(path.split('/')) == 1: # We are done
                 return item, self
             else:
-                if isinstance(item, Config):
+                if isinstance(item, CoolConfig):
                     path = remove_from_start(f'{cur_key}/', path)
                     return item.__get_item_from_path(path)
         return None
@@ -291,7 +291,7 @@ class Config:
 
     def asdict(self, exclude=[]):
         def __parse_entry(v):
-            if isinstance(v, Config):
+            if isinstance(v, CoolConfig):
                 return v.asdict(exclude=exclude)
             if isinstance(v, list):
                 res = []

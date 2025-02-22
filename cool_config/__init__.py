@@ -1,1 +1,1 @@
-from cool_config.config import Config
+from cool_config.config import CoolConfig
