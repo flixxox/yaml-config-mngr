@@ -24,4 +24,7 @@ print('If we only have the child config, we can reference to the parent config.'
 print(f'Like so: config["sub1/sub2"]["../../main_system/some_values"] -> {config["sub1/sub2"]["../../main_system/some_values"]}\n')
 
 print('Just getting a single element:')
-print(f'config["sub1/sub2"]["../../main_system/some_values[-1]"] -> {config["sub1/sub2"]["../../main_system/some_values[-1]"]}')
+print(f'config["sub1/sub2"]["../../main_system/some_values[-1]"] -> {config["sub1/sub2"]["../../main_system/some_values[-1]"]}\n')
+
+print('Referencing from a subconfig to the global config:')
+print(f'config["sub1/sub2/global_ref_param"] -> {config["sub1/sub2/global_ref_param"]}')

@@ -95,6 +95,23 @@ class CoolConfigTest:
             self.config['some_complex_list[4]/does_not_exist', 'default'], 'default'
         )
 
+    def test_global_reference(self):
+        self.assertEqual(
+            self.config['sub2/some_ref_param'], 'main_param'
+        )
+
+        self.assertEqual(
+            self.config['sub1/sub2/some_ref_param'], 'sub1_param'
+        )
+
+        self.assertEqual(
+            self.config['sub2/global_ref_param'], 'main_param'
+        )
+
+        self.assertEqual(
+            self.config['sub1/sub2/global_ref_param'], 'main_param'
+        )
+
 
 class ConfigFromArgs(unittest.TestCase, CoolConfigTest):
     def setUp(self):

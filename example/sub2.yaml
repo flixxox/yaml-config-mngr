@@ -1,3 +1,4 @@
 
 some_param: 'sub2_param'
 some_ref_param: '<ref>../some_param'
+global_ref_param: '<ref>/some_param'

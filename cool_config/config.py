@@ -236,6 +236,9 @@ class CoolConfig:
                 raise RuntimeError('Error! There is no parent config.')
             else:
                 return self.parent_config.__get_item_from_path(path)
+        if path.startswith('/'):
+            path = remove_from_start('/', path)
+            return self.get_root_config().__get_item_from_path(path)
 
         cur_key = path.split('/')[0]
         list_index = None
@@ -262,7 +265,6 @@ class CoolConfig:
 
     def __prepare_ref_path(self, path):
         path = remove_from_start('<ref>', path)
-        path = remove_from_start('/', path)
         path = remove_from_end('/', path)
         return path
 
@@ -292,6 +294,15 @@ class CoolConfig:
     def dump_to_file(self, filepath, exclude=[]):
         with open(filepath, 'w') as outfile:
             yaml.dump(self.asdict(exclude=exclude), outfile)
+
+    def get_root_config(self):
+        return self.get_root_config_of(self)
+
+    def get_root_config_of(self, config):
+        if config.path == '/':
+            return config
+        else:
+            return config.parent_config.get_root_config()
 
     # Hooks
 
