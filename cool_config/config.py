@@ -67,6 +67,10 @@ class CoolConfig:
     # Initial Parsing
 
     def parse_except_ref(self, config_dict):
+        # Parsing recursively creates a nested structure
+        # of CoolConfig objects. For that, every dict encoutered
+        # in the provided config is converted to a CoolConfig.
+        # Additionally, configs are imported.
         parsed = {}
         for key, item in config_dict.items():
             parsed[key] = self.__parse_non_ref_item(key, item)
@@ -197,6 +201,7 @@ class CoolConfig:
 
     def __setitem__(self, key, value):
         if len(key.split('/')) == 1:
+            value = self.__parse_non_ref_item(key, value)
             self.config[key] = value
             return
 
@@ -224,6 +229,8 @@ class CoolConfig:
             )
     
         location = res[1]
+        value = location.__parse_non_ref_item(key, value)
+
         if list_index is not None:
             location[containig_config].config[key][list_index] = value
         else:
@@ -333,7 +340,7 @@ class CoolConfig:
             self.config[f'{prefix}{k}'] = v
 
     def items(self):
-        for k, v in self.config.items():
+        for k in self.config.keys():
             yield k, self.__getitem__(k)
 
     def keys(self):

@@ -112,6 +112,56 @@ class CoolConfigTest:
             self.config['sub1/sub2/global_ref_param'], 'main_param'
         )
 
+    def test_setting_a_dict_in_a_list(self):
+        # Testing inside the main config
+
+        self.assertEqual(
+            self.config['some_param'], 'main_param'
+        )
+
+        self.config['some_param'] = {
+            'is_this_parsed?': [1,2,3]
+        }
+
+        self.assertIsInstance(
+            self.config['some_param'], CoolConfig
+        )
+        
+        self.assertEqual(
+            self.config['some_param/is_this_parsed?'], [1,2,3]
+        )
+
+        # Testing for a subconfig
+
+        self.assertEqual(
+            self.config['main_system/some_values[1]'], 1
+        )
+
+        self.config['main_system/some_values[1]'] = {
+            'this_should_be_1': 1,
+            'this_should_be_parsed_recursively': [
+                {'list_with_12': [1,2]},
+                {'list_with_34': [3,4]},
+            ]
+        }
+
+        self.assertIsInstance(
+            self.config['main_system/some_values[1]'], CoolConfig
+        )
+        self.assertIsInstance(
+            self.config['main_system/some_values[1]/this_should_be_parsed_recursively[0]'], CoolConfig
+        )
+        self.assertIsInstance(
+            self.config['main_system/some_values[1]/this_should_be_parsed_recursively[1]'], CoolConfig
+        )
+
+        self.assertEqual(
+            self.config['main_system/some_values[1]/this_should_be_parsed_recursively[0]/list_with_12'], [1,2]
+        )
+        self.assertEqual(
+            self.config['main_system/some_values[1]/this_should_be_parsed_recursively[1]/list_with_34'], [3,4]
+        )
+
 
 class ConfigFromArgs(unittest.TestCase, CoolConfigTest):
     def setUp(self):
