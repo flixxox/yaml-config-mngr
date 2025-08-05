@@ -187,7 +187,7 @@ class CoolConfig:
             item = res[0]
             location = res[1]
 
-        if isinstance(item, str) and item.startswith('<ref>'):
+        if self.__is_reference(item):
             path = location.__prepare_ref_path(item)
             res = location.__get_item_from_path(path)
             if res is None:
@@ -243,6 +243,7 @@ class CoolConfig:
                 raise RuntimeError('Error! There is no parent config.')
             else:
                 return self.parent_config.__get_item_from_path(path)
+
         if path.startswith('/'):
             path = remove_from_start('/', path)
             return self.get_root_config().__get_item_from_path(path)
@@ -256,6 +257,11 @@ class CoolConfig:
         
         if self.has_key(cur_key):
             item = self.__get_item(cur_key)
+            location = self
+
+            if self.__is_reference(item):
+                item, location = self.__parse_reference_item(item)
+
             if list_index is not None:
                 if not isinstance(item, list) or len(item) <= list_index:
                     return None
@@ -263,7 +269,7 @@ class CoolConfig:
                 cur_key = f'{cur_key}[{list_index}]'
 
             if len(path.split('/')) == 1: # We are done
-                return item, self
+                return item, location
             else:
                 if isinstance(item, CoolConfig):
                     path = remove_from_start(f'{cur_key}/', path)
@@ -310,6 +316,24 @@ class CoolConfig:
             return config
         else:
             return config.parent_config.get_root_config()
+
+    def __is_reference(self, item):
+        return isinstance(item, str) and item.startswith('<ref>')
+
+    def __parse_reference_item(self, item):
+        return self.__parse_reference_item_from_location(item, self)
+
+    def __parse_reference_item_from_location(self, item, location):
+        path = location.__prepare_ref_path(item)
+        res = location.__get_item_from_path(path)
+        if res is None:
+            raise RuntimeError(
+                f'Could not find ref path "{path}" from "{location.path}"! '
+                f'Referencing param: "{key}" from "{self.path}"!'
+            )
+        item = res[0]
+
+        return res[0], res[1]
 
     # Hooks
 

@@ -7,3 +7,5 @@ some_param4: {
 }
 
 sub2: '<import>sub2.yaml'
+
+some_complex_list: '<ref>/some_complex_list'

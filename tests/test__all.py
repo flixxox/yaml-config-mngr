@@ -55,7 +55,7 @@ class CoolConfigTest:
             self.config['some_ref_param_to_a_list'], 2
         )
         self.assertEqual(
-            self.config['reference_to_a_reference_does_not_work'], '<ref>main_system/some_values[1]'
+            self.config['reference_to_a_reference_does_work'], 2
         )
         self.assertEqual(
             self.config['reference_to_sub1'], 'sub1_param'
@@ -162,6 +162,36 @@ class CoolConfigTest:
             self.config['main_system/some_values[1]/this_should_be_parsed_recursively[1]/list_with_34'], [3,4]
         )
 
+    def test_reference_in_the_key(self):
+        self.assertEqual(
+            self.config['sub1/some_complex_list[0]/hello'], 'hello'
+        )
+
+        self.assertEqual(
+            self.config['sub1']['some_complex_list[0]/hello'], 'hello'
+        )
+
+        self.assertEqual(
+            self.config['sub1/some_complex_list[1]/world'], 'world'
+        )
+
+        self.assertEqual(
+            self.config['sub1/some_complex_list[2]/reference_to_hello'], 'hello'
+        )
+
+        self.assertEqual(
+            self.config['sub1/some_complex_list[3]/reference_to_world'], 'world'
+        )
+
+        self.config['sub1/some_complex_list[0]/hello'] = 'overwritten_hello'
+
+        self.assertEqual(
+            self.config['sub1/some_complex_list[0]/hello'], 'overwritten_hello'
+        )
+
+        self.assertEqual(
+            self.config['sub1']['some_complex_list[0]/hello'], 'overwritten_hello'
+        )
 
 class ConfigFromArgs(unittest.TestCase, CoolConfigTest):
     def setUp(self):

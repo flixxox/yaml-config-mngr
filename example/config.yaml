@@ -6,7 +6,7 @@ sub2: '<import>sub2.yaml'
 some_param: 'main_param'
 some_ref_param_to_a_list: '<ref>main_system/some_values[1]'
 
-reference_to_a_reference_does_not_work: '<ref>some_ref_param_to_a_list'
+reference_to_a_reference_does_work: '<ref>some_ref_param_to_a_list'
 
 reference_to_sub1: '<ref>sub1/some_param'
 reference_to_sub2: '<ref>sub2/some_param'
