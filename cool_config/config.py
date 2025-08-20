@@ -329,10 +329,8 @@ class CoolConfig:
         if res is None:
             raise RuntimeError(
                 f'Could not find ref path "{path}" from "{location.path}"! '
-                f'Referencing param: "{key}" from "{self.path}"!'
+                f'Referencing param: "{item}" from "{self.path}"!'
             )
-        item = res[0]
-
         return res[0], res[1]
 
     # Hooks
