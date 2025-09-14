@@ -297,6 +297,24 @@ class CoolConfig:
         else:
             return default
     
+    def __is_reference(self, item):
+        return isinstance(item, str) and item.startswith('<ref>')
+
+    def __parse_reference_item(self, item):
+        return self.__parse_reference_item_from_location(item, self)
+
+    def __parse_reference_item_from_location(self, item, location):
+        path = location.__prepare_ref_path(item)
+        res = location.__get_item_from_path(path)
+        if res is None:
+            raise RuntimeError(
+                f'Could not find ref path "{path}" from "{location.path}"! '
+                f'Referencing param: "{item}" from "{self.path}"!'
+            )
+        return res[0], res[1]
+
+    # Convenience Functions
+
     def hash(self, exclude=[]):
         import hashlib
         from pprint import pformat
@@ -317,21 +335,18 @@ class CoolConfig:
         else:
             return config.parent_config.get_root_config()
 
-    def __is_reference(self, item):
-        return isinstance(item, str) and item.startswith('<ref>')
-
-    def __parse_reference_item(self, item):
-        return self.__parse_reference_item_from_location(item, self)
-
-    def __parse_reference_item_from_location(self, item, location):
-        path = location.__prepare_ref_path(item)
-        res = location.__get_item_from_path(path)
-        if res is None:
-            raise RuntimeError(
-                f'Could not find ref path "{path}" from "{location.path}"! '
-                f'Referencing param: "{item}" from "{self.path}"!'
-            )
-        return res[0], res[1]
+    def cond_read(self, key, if_param=None, equals=None, default=None, expects_if_param=True):
+        assert if_param is not None and equals is not None
+        try:
+            if_value = self.__getitem__(if_param)
+        except ValueError as e:
+            if expects_if_param:
+                raise e
+            return default
+        if if_value == equals:
+            return self.__getitem__(key)
+        else:
+            return default
 
     # Hooks
 
